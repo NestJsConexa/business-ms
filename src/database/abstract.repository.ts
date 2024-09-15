@@ -1,11 +1,12 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { FilterQuery, Model, Types, UpdateQuery } from 'mongoose';
 import { AbstractDocument } from './abstract.schema';
+import { PaginationDto } from 'src/users/dto/pagination.dto';
 
 export abstract class AbstractRepository<TDocument extends AbstractDocument> {
   protected abstract readonly logger: Logger;
 
-  constructor(protected readonly model: Model<TDocument>) {}
+  constructor(protected readonly model: Model<TDocument>) { }
 
   async create(document: Omit<TDocument, '_id'>): Promise<TDocument> {
     const createdDocument = new this.model({
@@ -55,4 +56,39 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
   ): Promise<TDocument> {
     return this.model.findOneAndDelete(filterQuery).lean<TDocument>(true);
   }
+
+  async findPaginated(paginationDto: PaginationDto): Promise<{
+    documents: TDocument[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const { email, page = 1, limit = 10 } = paginationDto;
+
+    const filter: any = {};
+    if (email) {
+      filter.email = new RegExp(email, 'i');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const documents = await this.model
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .lean<TDocument[]>(true);
+
+    const total = await this.model.countDocuments(filter);
+
+    return {
+      documents,
+      total,
+      page,
+      limit,
+    };
+  }
+
+
+
+
 }
