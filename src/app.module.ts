@@ -11,8 +11,7 @@ import { UsersModule } from './users/users.module';
       validationSchema: Joi.object({
         MONGODB_URI: Joi.string().required(),
         PORT: Joi.number().required(),
-        JWT_SECRET: Joi.string().required(),
-        JWT_EXPIRATION: Joi.number().required()
+        JWT_SECRET: Joi.string().required()
       })
     }),
     DatabaseModule,
